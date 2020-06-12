@@ -30,4 +30,10 @@ trait AssertPagesForErrorsTrait
         }
     }
 
+    protected function assertJsonOk()
+    {
+        $response = json_decode($this->_getBodyAsString());
+        $this->assertEquals(1, $response->status, 'json status should be "1", msg: ' . $response->msg);
+    }
+
 }
