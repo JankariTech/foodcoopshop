@@ -21,7 +21,6 @@ use Cake\Core\Configure;
         'script' => Configure::read('app.jsNamespace') . ".Helper.initDatepicker();
             $('input.datepicker').datepicker();".
             Configure::read('app.jsNamespace') . ".Admin.init();" .
-            Configure::read('app.jsNamespace') . ".Admin.initEmailToAllButton();" .
             Configure::read('app.jsNamespace') . ".ModalCustomerStatusEdit.init();" .
             Configure::read('app.jsNamespace') . ".ModalCustomerGroupEdit.init();" .
             Configure::read('app.jsNamespace') . ".Helper.initTooltip('.customer-details-read-button, .customer-comment-edit-button');" .
@@ -46,7 +45,7 @@ echo '<tr class="sort">';
 echo $this->element('rowMarker/rowMarkerAll', [
     'enabled' => true
 ]);
-echo '<th class="hide">ID</th>';
+echo '<th>' . $this->Paginator->sort('Customers.id_customer', 'ID') . '</th>';
 echo '<th>' . $this->Paginator->sort('Customers.' . Configure::read('app.customerMainNamePart'), __d('admin', 'Name')) . '</th>';
 echo '<th>' . $this->Paginator->sort('Customers.id_default_group', __d('admin', 'Group')) . '</th>';
 echo '<th>' . $this->Paginator->sort('Customers.email', __d('admin', 'Email')) . '</th>';
@@ -73,13 +72,13 @@ $sumTimebasedCurrency = null;
 foreach ($customers as $customer) {
     $i ++;
 
-    echo '<tr class="data">';
+    echo '<tr class="data" data-customer-id="'.$customer->id_customer.'">';
 
     echo $this->element('rowMarker/rowMarker', [
         'show' => true
     ]);
 
-    echo '<td class="hide">';
+    echo '<td style="text-align:right;">';
     echo $customer->id_customer;
     echo '</td>';
 
@@ -285,7 +284,7 @@ if (Configure::read('appDb.FCS_TIMEBASED_CURRENCY_ENABLED')) {
 if (Configure::read('app.emailOrderReminderEnabled')) {
     echo '<td><b>' . $sumEmailReminders . '</b></td>';
 }
-echo '<td colspan="3"></td>';
+echo '<td colspan="4"></td>';
 echo '</tr>';
 
 echo '</table>';
@@ -293,7 +292,7 @@ echo '</table>';
 echo '<div class="sc"></div>';
 
 echo '<div class="bottom-button-container">';
-    echo $this->element('customerList/button/email', ['emailAddresses' => $emailAddresses]);
+    echo $this->element('customerList/button/email');
     echo $this->element('customerList/button/generateMemberCardsOfSelectedCustomers');
 echo '</div>';
 echo '<div class="sc"></div>';
