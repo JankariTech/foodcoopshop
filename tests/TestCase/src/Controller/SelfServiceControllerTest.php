@@ -188,11 +188,9 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->configRequest([
             'headers' => [
                 'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
             ],
-            'environment'=>[
-                'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-                'HTTP_REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
-            ]
         ]);
 
         $this->post(
@@ -262,6 +260,9 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->post($this->Slug->getLogin(), [
            'barCode' => Configure::read('test.superadminBarCode'),
        ]);
+        $this->session([
+            'Auth' => $_SESSION['Auth']
+        ]);
     }
 
     protected function changeConfiguration($configKey, $newValue)
