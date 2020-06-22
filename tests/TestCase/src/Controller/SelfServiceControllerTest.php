@@ -18,6 +18,7 @@ use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\ORM\TableRegistry;
 use App\Test\TestCase\Traits\LoginTrait;
+use Cake\Http\ServerRequest;
 
 class SelfServiceControllerTest extends AppCakeTestCase
 {
@@ -187,12 +188,13 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->configRequest([
             'headers' => [
                 'Accept' => 'application/json',
-                'X-Requested-With' => 'XMLHttpRequest',
-                'REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
             ],
-            'HTTP_REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service'),
+            'environment'=>[
+                'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                'HTTP_REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
+            ]
         ]);
-//        $_SERVER['HTTP_REFERER'] = Configure::read('app.cakeServerName') . '/' . __('route_self_service');
+
         $this->post(
             '/warenkorb/ajaxAdd/',
             [
@@ -202,7 +204,6 @@ class SelfServiceControllerTest extends AppCakeTestCase
             ],
         );
         var_dump(json_decode($this->_getBodyAsString()));
-        var_dump(Configure::read('app.cakeServerName') . '/' . __('route_self_service'));
         return json_decode($this->_getBodyAsString());
     }
 
@@ -250,15 +251,10 @@ class SelfServiceControllerTest extends AppCakeTestCase
 
     private function doBarCodeLogin()
     {
-        // $this->httpClient->loginEmail = Configure::read('test.loginEmailSuperadmin');
-//         $this->httpClient->followOneRedirectForNextRequest();
-        // $this->httpClient->post($this->Slug->getLogin(), [
-        //     'barCode' => Configure::read('test.superadminBarCode')
-        // ]);
+
         $this->configRequest([
            'headers' => [
                'Accept' => 'application/json',
-//               'REDIRECT_' => 1,
            ],
        ]);
         $this->_retainFlashMessages = true;
