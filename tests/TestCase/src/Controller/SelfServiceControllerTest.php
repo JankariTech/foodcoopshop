@@ -188,11 +188,9 @@ class SelfServiceControllerTest extends AppCakeTestCase
             'headers' => [
                 'Accept' => 'application/json',
                 'X-Requested-With' => 'XMLHttpRequest',
-//                'REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
+                'REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
             ],
-//            'HTTP_REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service'),
         ]);
-        $_SERVER['HTTP_REFERER'] = "Configure::read(\'app.cakeServerName\') . \'/\' . __(\'route_self_service\')";
 
         $this->post(
             '/warenkorb/ajaxAdd/',
@@ -259,7 +257,6 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->configRequest([
            'headers' => [
                'Accept' => 'application/json',
-//               'REDIRECT_' => 1,
            ],
        ]);
         $this->_retainFlashMessages = true;
@@ -267,6 +264,9 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->post($this->Slug->getLogin(), [
            'barCode' => Configure::read('test.superadminBarCode'),
        ]);
+        $this->session([
+            'Auth' => $_SESSION['Auth']
+        ]);
     }
 
     protected function changeConfiguration($configKey, $newValue)
