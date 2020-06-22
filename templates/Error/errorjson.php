@@ -21,4 +21,4 @@ if (Configure::check('app.outputStringReplacements')) {
 }
 
 echo json_encode($response);
-exit;
+//exit;

@@ -17,17 +17,19 @@ use App\Test\TestCase\Traits\AssertPagesForErrorsTrait;
 use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\ORM\TableRegistry;
+use App\Test\TestCase\Traits\LoginTrait;
 
 class SelfServiceControllerTest extends AppCakeTestCase
 {
 
     use AssertPagesForErrorsTrait;
     use IntegrationTestTrait;
+    use LoginTrait;
 
     public function testBarCodeLoginAsSuperadminIfNotEnabled()
     {
         $this->doBarCodeLogin();
-        $this->assertRegExpWithUnquotedString(__('Signing_in_failed_account_inactive_or_password_wrong?'), $this->httpClient->getContent());
+        $this->assertFlashMessage(__('Signing_in_failed_account_inactive_or_password_wrong?'));
     }
 
     public function testPageSelfService()
@@ -44,7 +46,7 @@ class SelfServiceControllerTest extends AppCakeTestCase
     {
         $this->changeConfiguration('FCS_SELF_SERVICE_MODE_FOR_STOCK_PRODUCTS_ENABLED', 1);
         $this->doBarCodeLogin();
-        $this->assertDoesNotMatchRegularExpressionWithUnquotedString(__('Signing_in_failed_account_inactive_or_password_wrong?'), $this->httpClient->getContent());
+        $this->assertArrayNotHasKey('Flash',$_SESSION);
     }
 
     public function testSelfServiceAddProductPricePerUnitWrong()
@@ -52,9 +54,7 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->changeConfiguration('FCS_SELF_SERVICE_MODE_FOR_STOCK_PRODUCTS_ENABLED', 1);
         $this->doBarCodeLogin();
         $this->addProductToSelfServiceCart(351, 1);
-        $response = $this->httpClient->getJsonDecodedContent();
-        $expectedErrorMessage = 'Bitte trage das entnommene Gewicht ein.';
-        $this->assertRegExpWithUnquotedString($expectedErrorMessage, $response->msg);
+        $this->assertResponseContains('Bitte trage das entnommene Gewicht ein.');
         $this->assertJsonError();
     }
 
@@ -63,9 +63,7 @@ class SelfServiceControllerTest extends AppCakeTestCase
         $this->changeConfiguration('FCS_SELF_SERVICE_MODE_FOR_STOCK_PRODUCTS_ENABLED', 1);
         $this->doBarCodeLogin();
         $this->addProductToSelfServiceCart('350-15', 1, 'bla bla');
-        $response = $this->httpClient->getJsonDecodedContent();
-        $expectedErrorMessage = 'Bitte trage das entnommene Gewicht ein.';
-        $this->assertRegExpWithUnquotedString($expectedErrorMessage, $response->msg);
+        $this->assertResponseContains('Bitte trage das entnommene Gewicht ein.');
         $this->assertJsonError();
     }
 
@@ -186,16 +184,26 @@ class SelfServiceControllerTest extends AppCakeTestCase
 
     private function addProductToSelfServiceCart($productId, $amount, $orderedQuantityInUnits = -1)
     {
-        $this->httpClient->ajaxPost(
+        $this->configRequest([
+            'headers' => [
+                'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service')
+            ],
+            'HTTP_REFERER' => Configure::read('app.cakeServerName') . '/' . __('route_self_service'),
+        ]);
+//        $_SERVER['HTTP_REFERER'] = Configure::read('app.cakeServerName') . '/' . __('route_self_service');
+        $this->post(
             '/warenkorb/ajaxAdd/',
             [
                 'productId' => $productId,
                 'amount' => $amount,
                 'orderedQuantityInUnits' => $orderedQuantityInUnits
             ],
-            $this->getSelfServicePostOptions()
         );
-        return $this->httpClient->getJsonDecodedContent();
+        var_dump(json_decode($this->_getBodyAsString()));
+        var_dump(Configure::read('app.cakeServerName') . '/' . __('route_self_service'));
+        return json_decode($this->_getBodyAsString());
     }
 
     private function removeProductFromSelfServiceCart($productId)
@@ -242,11 +250,43 @@ class SelfServiceControllerTest extends AppCakeTestCase
 
     private function doBarCodeLogin()
     {
-        $this->httpClient->loginEmail = Configure::read('test.loginEmailSuperadmin');
-        $this->httpClient->followOneRedirectForNextRequest();
-        $this->httpClient->post($this->Slug->getLogin(), [
-            'barCode' => Configure::read('test.superadminBarCode')
-        ]);
+        // $this->httpClient->loginEmail = Configure::read('test.loginEmailSuperadmin');
+//         $this->httpClient->followOneRedirectForNextRequest();
+        // $this->httpClient->post($this->Slug->getLogin(), [
+        //     'barCode' => Configure::read('test.superadminBarCode')
+        // ]);
+        $this->configRequest([
+           'headers' => [
+               'Accept' => 'application/json',
+//               'REDIRECT_' => 1,
+           ],
+       ]);
+        $this->_retainFlashMessages = true;
+
+        $this->post($this->Slug->getLogin(), [
+           'barCode' => Configure::read('test.superadminBarCode'),
+       ]);
+    }
+
+    protected function changeConfiguration($configKey, $newValue)
+    {
+        $this->Configuration = TableRegistry::getTableLocator()->get('Configurations');
+
+        $query = 'UPDATE fcs_configuration SET value = :newValue WHERE name = :configKey;';
+        $params = [
+            'newValue' => $newValue,
+            'configKey' => $configKey
+        ];
+        $statement = $this->dbConnection->prepare($query);
+        $statement->execute($params);
+        $this->Configuration->loadConfigurations();
+        $this->logout();
+    }
+
+    public function assertJsonError()
+    {
+        $response = json_decode($this->_getBodyAsString());
+        $this->assertEquals(0, $response->status, 'json status should be "0"');
     }
 
 }

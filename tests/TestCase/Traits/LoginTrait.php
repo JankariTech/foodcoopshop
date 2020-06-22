@@ -33,7 +33,6 @@ trait LoginTrait
                 'AddressCustomers',
             ]
         ])->first()->toArray();
-
         $this->session([
             'Auth' => [
                 'User' => $loggedUser
