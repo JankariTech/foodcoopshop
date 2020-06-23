@@ -30,4 +30,13 @@ trait AssertPagesForErrorsTrait
         }
     }
 
+    protected function assert404NotFoundHeader()
+    {
+        $this->assertEquals(404, $this->_response->getStatusCode());
+    }
+
+    protected function assert200OkHeader()
+    {
+        $this->assertEquals(200, $this->_response->getStatusCode());
+    }
 }
