@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Lib\OutputFilter\OutputFilter;
 use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
@@ -148,6 +149,15 @@ class AppController extends Controller
         parent::beforeFilter($event);
     }
 
+    public function afterFilter(EventInterface $event)
+    {
+        parent::afterFilter($event);
+        if (Configure::check('app.outputStringReplacements')) {
+            $newOutput = OutputFilter::replace($this->response->getBody(), Configure::read('app.outputStringReplacements'));
+            $this->response = $this->response->withStringBody($newOutput);
+        }
+    }
+
     /**
      * keep this method in a controller - does not work with AppAuthComponent::login
      * updates login data (after profile change for customer and manufacturer)
@@ -186,6 +196,7 @@ class AppController extends Controller
     protected function sendAjaxError($error)
     {
         if ($this->getRequest()->is('json')) {
+            $this->viewBuilder()->setLayout('ajax');
             $this->getResponse()->withStatus(500);
             $response = [
                 'status' => APP_OFF,

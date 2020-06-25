@@ -21,6 +21,12 @@ use Cake\ORM\TableRegistry;
 trait LoginTrait
 {
 
+    protected $loggedInUserId;
+
+    public function getLoggedInUserId() {
+        return $this->loggedInUserId;
+    }
+
     protected function login($userId)
     {
 
@@ -32,13 +38,15 @@ trait LoginTrait
             'contain' => [
                 'AddressCustomers',
             ]
-        ])->first()->toArray();
+        ]);
+        $loggedUser = $loggedUser->first()->toArray();
 
         $this->session([
             'Auth' => [
                 'User' => $loggedUser
             ]
         ]);
+        $this->loggedInUserId = $userId;
     }
 
     protected function loginAsSuperadmin()
